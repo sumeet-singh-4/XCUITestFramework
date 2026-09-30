@@ -1,0 +1,223 @@
+name: XCUITest CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  SCHEME: XCUITestFramework
+  PLATFORM: iOS Simulator
+  DERIVED_DATA_PATH: DerivedData
+
+jobs:
+  test:
+    name: Run XCUITests on iOS ${{ matrix.ios-version }}
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        ios-version: ['17.2', '17.5', '18.0']
+        device: ['iPhone 15', 'iPhone 15 Pro']
+        include:
+          - ios-version: '17.2'
+            xcode-version: '15.2'
+          - ios-version: '17.5'
+            xcode-version: '15.4'
+          - ios-version: '18.0'
+            xcode-version: '16.0'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: List available simulators
+        run: xcrun simctl list devices available
+
+      - name: Boot simulator
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available | grep "${{ matrix.device }}" | grep "${{ matrix.ios-version }}" | head -n 1 | grep -oE '\([A-Z0-9-]+\)' | tr -d '()')
+          echo "Device ID: $DEVICE_ID"
+          xcrun simctl boot $DEVICE_ID || echo "Simulator already booted"
+          xcrun simctl list devices | grep Booted
+
+      - name: Build for testing
+        run: |
+          xcodebuild build-for-testing \
+            -scheme ${{ env.SCHEME }} \
+            -destination "platform=${{ env.PLATFORM }},name=${{ matrix.device }},OS=${{ matrix.ios-version }}" \
+            -derivedDataPath ${{ env.DERIVED_DATA_PATH }} \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Run tests
+        run: |
+          xcodebuild test-without-building \
+            -scheme ${{ env.SCHEME }} \
+            -destination "platform=${{ env.PLATFORM }},name=${{ matrix.device }},OS=${{ matrix.ios-version }}" \
+            -derivedDataPath ${{ env.DERIVED_DATA_PATH }} \
+            -resultBundlePath TestResults.xcresult \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Extract test results
+        if: always()
+        run: |
+          xcrun xcresulttool get --format json --path TestResults.xcresult > test-results.json
+          cat test-results.json
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ios-${{ matrix.ios-version }}-${{ matrix.device }}
+          path: |
+            TestResults.xcresult
+            test-results.json
+            Screenshots/
+          retention-days: 30
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots-ios-${{ matrix.ios-version }}-${{ matrix.device }}
+          path: Screenshots/
+          retention-days: 30
+
+      - name: Generate HTML report
+        if: always()
+        run: |
+          # Install xcpretty if not available
+          gem install xcpretty xcpretty-json-formatter
+
+          # Generate HTML report from xcresult
+          if [ -d "TestResults.xcresult" ]; then
+            mkdir -p Reports
+            xcrun xccov view --report --json TestResults.xcresult > Reports/coverage.json
+            echo "Test results and coverage extracted"
+          fi
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-ios-${{ matrix.ios-version }}-${{ matrix.device }}
+          path: Reports/
+          retention-days: 30
+
+  report:
+    name: Publish Test Report
+    runs-on: macos-14
+    needs: test
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results
+
+      - name: List downloaded artifacts
+        run: |
+          ls -R all-results/
+
+      - name: Create summary report
+        run: |
+          mkdir -p final-report
+          echo "# XCUITest Results Summary" > final-report/summary.md
+          echo "" >> final-report/summary.md
+          echo "**Build:** ${{ github.run_number }}" >> final-report/summary.md
+          echo "**Branch:** ${{ github.ref_name }}" >> final-report/summary.md
+          echo "**Commit:** ${{ github.sha }}" >> final-report/summary.md
+          echo "" >> final-report/summary.md
+          echo "## Test Results by Configuration" >> final-report/summary.md
+
+          for dir in all-results/test-results-*; do
+            if [ -d "$dir" ]; then
+              config=$(basename "$dir" | sed 's/test-results-//')
+              echo "### $config" >> final-report/summary.md
+              if [ -f "$dir/test-results.json" ]; then
+                echo "✅ Tests completed" >> final-report/summary.md
+              else
+                echo "❌ Tests failed or incomplete" >> final-report/summary.md
+              fi
+              echo "" >> final-report/summary.md
+            fi
+          done
+
+      - name: Upload final report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report
+          path: final-report/
+          retention-days: 90
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('final-report/summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: SwiftLint
+        run: |
+          if which swiftlint >/dev/null; then
+            swiftlint --version
+            swiftlint lint --reporter github-actions-logging
+          else
+            echo "SwiftLint not installed, skipping..."
+          fi
+
+      - name: Build documentation
+        run: |
+          if which jazzy >/dev/null; then
+            jazzy \
+              --module XCUITestFramework \
+              --swift-build-tool xcodebuild \
+              --output docs \
+              --theme fullwidth
+          else
+            echo "Jazzy not installed, skipping documentation generation..."
+          fi
+
+      - name: Upload documentation
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-documentation
+          path: docs/
+          retention-days: 30

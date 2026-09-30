@@ -1,0 +1,70 @@
+{
+  "configurations" : [
+    {
+      "id" : "default",
+      "name" : "Configuration 1",
+      "options" : {
+        "parallelizationEnabled" : true,
+        "maximumTestExecutionTimeAllowance" : 600,
+        "testExecutionOrdering" : "random",
+        "testTimeoutsEnabled" : true
+      }
+    },
+    {
+      "id" : "parallel",
+      "name" : "Parallel Execution",
+      "options" : {
+        "parallelizationEnabled" : true,
+        "maximumTestExecutionTimeAllowance" : 600,
+        "maximumTestRepetitions" : 1,
+        "testExecutionOrdering" : "random"
+      }
+    },
+    {
+      "id" : "sequential",
+      "name" : "Sequential Execution",
+      "options" : {
+        "parallelizationEnabled" : false,
+        "maximumTestExecutionTimeAllowance" : 1200,
+        "testExecutionOrdering" : "alphabetical"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:XCUITestFramework.xcodeproj",
+          "identifier" : "XCUITestFramework",
+          "name" : "XCUITestFramework"
+        }
+      ]
+    },
+    "environmentVariableEntries" : [
+      {
+        "key" : "TEST_ENVIRONMENT",
+        "value" : "qa"
+      }
+    ],
+    "language" : "en",
+    "region" : "US",
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:XCUITestFramework.xcodeproj",
+      "identifier" : "XCUITestFramework",
+      "name" : "XCUITestFramework"
+    },
+    "testTimeoutsEnabled" : true,
+    "maximumTestExecutionTimeAllowance" : 600
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:XCUITestFramework.xcodeproj",
+        "identifier" : "XCUITestFrameworkTests",
+        "name" : "XCUITestFrameworkTests"
+      }
+    }
+  ],
+  "version" : 1
+}

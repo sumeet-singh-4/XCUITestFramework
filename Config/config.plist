@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>app.bundleId</key>
+	<string>com.example.app</string>
+	<key>app.path</key>
+	<string>Apps/YourApp.app</string>
+	<key>app.baseURL</key>
+	<string>https://api.example.com</string>
+	<key>device.name</key>
+	<string>iPhone 15</string>
+	<key>device.platformVersion</key>
+	<string>17.0</string>
+	<key>wait.implicitTimeout</key>
+	<real>10.0</real>
+	<key>wait.explicitTimeout</key>
+	<real>30.0</real>
+	<key>reporting.screenshotOnFailure</key>
+	<true/>
+	<key>reporting.videoRecording</key>
+	<false/>
+	<key>testData.path</key>
+	<string>XCUITestFrameworkTests/Resources/TestData</string>
+	<key>environment</key>
+	<string>default</string>
+</dict>
+</plist>
