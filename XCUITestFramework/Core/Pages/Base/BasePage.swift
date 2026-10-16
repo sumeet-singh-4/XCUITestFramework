@@ -11,7 +11,7 @@ open class BasePage {
 
     // MARK: - Initialization
 
-    public init(app: XCUIApplication, timeout: TimeInterval = 10.0) {
+    public required init(app: XCUIApplication, timeout: TimeInterval = 10.0) {
         self.app = app
         self.timeout = timeout
     }
@@ -270,13 +270,4 @@ open class BasePage {
     public func logInfo(_ message: String) {
         print("ℹ️ [INFO] \(message)")
     }
-}
-
-// MARK: - Swipe Direction Enum
-
-public enum SwipeDirection: String {
-    case up = "up"
-    case down = "down"
-    case left = "left"
-    case right = "right"
 }

@@ -8,7 +8,9 @@ public class ConfigReader {
 
     // MARK: - Properties
 
-    private static var sharedInstance: ConfigReader?
+    /// Thread-safe singleton instance using Swift's lazy initialization
+    public static let shared: ConfigReader = ConfigReader()
+
     private var config: [String: Any] = [:]
     private let environment: String
     private var loadError: ConfigurationException?
@@ -28,13 +30,6 @@ public class ConfigReader {
             self.loadError = wrappedError
             wrappedError.log()
         }
-    }
-
-    public static var shared: ConfigReader {
-        if sharedInstance == nil {
-            sharedInstance = ConfigReader()
-        }
-        return sharedInstance!
     }
 
     // MARK: - Configuration Loading
@@ -197,9 +192,9 @@ public class ConfigReader {
     }
 
     /// Reload configuration (useful for testing)
-    public static func reload() {
-        sharedInstance = nil
-        _ = shared
+    /// Note: With immutable singleton, reloading requires app restart or manual config update
+    public func reloadConfiguration() throws {
+        try loadConfiguration()
     }
 
     /// Print all configuration for debugging

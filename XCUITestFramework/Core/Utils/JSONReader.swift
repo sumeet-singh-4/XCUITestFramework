@@ -107,6 +107,25 @@ public class JSONReader {
         }
     }
 
+    /// Decode JSON file (throws version for DataProvider)
+    /// - Parameters:
+    ///   - filename: Name of the JSON file (without extension)
+    ///   - type: The Decodable type to decode to
+    ///   - bundle: Bundle to search for the file (defaults to main)
+    /// - Returns: Decoded object
+    /// - Throws: Error if file not found or decoding fails
+    public static func decode<T: Decodable>(fileName: String, as type: T.Type, bundle: Bundle = .main) throws -> T {
+        guard let path = bundle.path(forResource: fileName, ofType: "json") else {
+            throw NSError(domain: "JSONReader", code: 404, userInfo: [NSLocalizedDescriptionKey: "JSON file '\(fileName).json' not found"])
+        }
+
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(type, from: data)
+        print("✅ [JSONReader] Successfully decoded JSON to \(type) from: \(fileName).json")
+        return decoded
+    }
+
     // MARK: - Get Value by Key Path
 
     /// Get value from JSON using key path (e.g., "user.credentials.username")

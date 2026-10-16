@@ -94,7 +94,8 @@ XCUITestFramework/
 │   ├── FRAMEWORK_SUMMARY.md                 # Architecture overview
 │   ├── FRAMEWORK_STRUCTURE.md               # This file
 │   ├── FRAMEWORK_FEATURES.md                # Features guide
-│   └── WRITING_TESTS.md                     # Test writing guide
+│   ├── WRITING_TESTS.md                     # Test writing guide
+│   └── XCODE_PROJECT_SETUP.md               # Xcode project setup for third-party apps
 │
 ├── 📂 .github/                              # GitHub configuration
 │   └── 📂 workflows/                        # CI/CD workflows

@@ -128,9 +128,14 @@ public class TextField {
         // Long press to show paste menu
         element.press(forDuration: 1.2)
 
-        // Tap paste button
+        // Try paste from menu
         if app.menuItems["Paste"].waitForExistence(timeout: 2) {
             app.menuItems["Paste"].tap()
+        } else {
+            // Fallback to clear + type if paste menu not available
+            print("⚠️ Paste menu not found, falling back to type")
+            clear()
+            element.typeText(text)
         }
         return self
     }

@@ -206,23 +206,6 @@ public class PerformanceUtils {
 
     // MARK: - XCTest Integration
 
-    /// Wrapper for XCTest's measure block with custom metrics
-    /// - Parameters:
-    ///   - name: Name of the measurement
-    ///   - metrics: XCTest metrics to measure
-    ///   - block: Block to measure
-    public static func measureWithMetrics(
-        name: String,
-        metrics: [XCTMetric] = [XCTClockMetric()],
-        block: () throws -> Void
-    ) rethrows {
-        let options = XCTMeasureOptions()
-        options.iterationCount = 5
-
-        XCTContext.runActivity(named: name) { _ in
-            measure(metrics: metrics, options: options) {
-                try? block()
-            }
-        }
-    }
+    /// Note: For XCTest performance measurements with custom metrics,
+    /// use XCTestCase.measure(metrics:options:block:) directly in your test class
 }

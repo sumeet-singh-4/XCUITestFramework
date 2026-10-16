@@ -111,7 +111,16 @@ public class TestLifecycleListenerManager {
 
     // MARK: - Properties
 
-    private var listeners: [TestLifecycleListener] = []
+    /// Weak wrapper to prevent memory leaks
+    private class WeakListener {
+        weak var value: TestLifecycleListener?
+
+        init(_ value: TestLifecycleListener) {
+            self.value = value
+        }
+    }
+
+    private var listeners: [WeakListener] = []
     private let queue = DispatchQueue(label: "com.xcuitestframework.listeners", attributes: .concurrent)
 
     private init() {}
@@ -120,14 +129,16 @@ public class TestLifecycleListenerManager {
 
     public func register(_ listener: TestLifecycleListener) {
         queue.async(flags: .barrier) {
-            self.listeners.append(listener)
+            // Remove nil listeners before adding new one
+            self.cleanupNilListeners()
+            self.listeners.append(WeakListener(listener))
             print("✅ Registered test lifecycle listener: \(type(of: listener))")
         }
     }
 
     public func unregister(_ listener: TestLifecycleListener) {
         queue.async(flags: .barrier) {
-            self.listeners.removeAll { $0 === listener }
+            self.listeners.removeAll { $0.value === listener || $0.value == nil }
             print("✅ Unregistered test lifecycle listener: \(type(of: listener))")
         }
     }
@@ -139,53 +150,58 @@ public class TestLifecycleListenerManager {
         }
     }
 
+    /// Remove listeners that have been deallocated
+    private func cleanupNilListeners() {
+        listeners = listeners.filter { $0.value != nil }
+    }
+
     // MARK: - Notification Methods
 
     public func notifyTestSuiteWillStart(_ suite: XCTestSuite) {
         queue.async {
-            self.listeners.forEach { $0.testSuiteWillStart(suite) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testSuiteWillStart(suite) }
         }
     }
 
     public func notifyTestSuiteDidFinish(_ suite: XCTestSuite, result: TestResult) {
         queue.async {
-            self.listeners.forEach { $0.testSuiteDidFinish(suite, result: result) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testSuiteDidFinish(suite, result: result) }
         }
     }
 
     public func notifyTestCaseWillStart(_ testCase: XCTestCase) {
         queue.async {
-            self.listeners.forEach { $0.testCaseWillStart(testCase) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testCaseWillStart(testCase) }
         }
     }
 
     public func notifyTestCaseDidFinish(_ testCase: XCTestCase, result: TestResult) {
         queue.async {
-            self.listeners.forEach { $0.testCaseDidFinish(testCase, result: result) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testCaseDidFinish(testCase, result: result) }
         }
     }
 
     public func notifyTestCaseDidFail(_ testCase: XCTestCase, failure: TestFailure) {
         queue.async {
-            self.listeners.forEach { $0.testCaseDidFail(testCase, failure: failure) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testCaseDidFail(testCase, failure: failure) }
         }
     }
 
     public func notifyTestCaseDidSkip(_ testCase: XCTestCase, reason: String?) {
         queue.async {
-            self.listeners.forEach { $0.testCaseDidSkip(testCase, reason: reason) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testCaseDidSkip(testCase, reason: reason) }
         }
     }
 
     public func notifyTestMethodWillStart(_ testCase: XCTestCase, method: String) {
         queue.async {
-            self.listeners.forEach { $0.testMethodWillStart(testCase, method: method) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testMethodWillStart(testCase, method: method) }
         }
     }
 
     public func notifyTestMethodDidFinish(_ testCase: XCTestCase, method: String, result: TestResult) {
         queue.async {
-            self.listeners.forEach { $0.testMethodDidFinish(testCase, method: method, result: result) }
+            self.listeners.compactMap { $0.value }.forEach { $0.testMethodDidFinish(testCase, method: method, result: result) }
         }
     }
 }

@@ -1,5 +1,4 @@
 import XCTest
-@testable import XCUITestFramework
 
 /// Base test class for all XCUITest test cases
 /// Provides common setup, teardown, and utilities
@@ -22,8 +21,13 @@ class BaseTest: XCTestCase {
         // Initialize configuration
         config = ConfigReader.shared
 
-        // Initialize app
-        app = XCUIApplication()
+        // Initialize app with bundle identifier from configuration
+        let bundleId = config.appBundleId
+        if !bundleId.isEmpty {
+            app = XCUIApplication(bundleIdentifier: bundleId)
+        } else {
+            app = XCUIApplication()
+        }
 
         // Configure app launch arguments and environment
         setupAppLaunchConfiguration()
@@ -125,7 +129,9 @@ class BaseTest: XCTestCase {
     /// Wait for specific duration
     /// - Parameter seconds: Number of seconds to wait
     func wait(_ seconds: TimeInterval) {
-        Thread.sleep(forTimeInterval: seconds)
+        if seconds > 0 {
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: seconds))
+        }
     }
 
     /// Wait for condition to be true
@@ -187,9 +193,11 @@ class BaseTest: XCTestCase {
     }
 
     /// Lock device
+    /// Note: Device locking is not supported via official XCUITest APIs
+    /// Consider testing lock screen scenarios manually or via alternative approaches
     func lockDevice() {
-        XCUIDevice.shared.perform(NSSelectorFromString("pressLockButton"))
-        print("🔒 [BaseTest] Device locked")
+        print("⚠️ [BaseTest] Device locking not supported via official XCUITest APIs")
+        print("   Consider manual testing or using XCTest UI automation for lock screen scenarios")
     }
 
     // MARK: - Alert Handling

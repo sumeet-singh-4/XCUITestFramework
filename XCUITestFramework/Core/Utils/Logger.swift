@@ -12,8 +12,19 @@ public class Logger {
 
     // MARK: - Properties
 
-    public static var minimumLevel: LogLevel = .info
-    public static var isEnabled: Bool = true
+    public private(set) static var minimumLevel: LogLevel = .info
+    public private(set) static var isEnabled: Bool = true
+
+    // MARK: - Configuration
+
+    /// Configure logger settings
+    /// - Parameters:
+    ///   - level: Minimum log level to display
+    ///   - enabled: Whether logging is enabled
+    public static func configure(level: LogLevel, enabled: Bool = true) {
+        minimumLevel = level
+        isEnabled = enabled
+    }
 
     // MARK: - Logging Methods
 
@@ -48,7 +59,7 @@ public class Logger {
         guard level.shouldLog(minimumLevel: minimumLevel) else { return }
 
         let fileName = (file as NSString).lastPathComponent
-        let timestamp = dateFormatter.string(from: Date())
+        let timestamp = getCurrentTimeString()
 
         let logMessage = "\(level.prefix) [\(timestamp)] [\(level.name)] [\(fileName):\(line)] \(message)"
         print(logMessage)
@@ -56,9 +67,20 @@ public class Logger {
 
     // MARK: - Date Formatting
 
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss.SSS"
+    /// Thread-safe date formatting using ISO8601DateFormatter
+    private static let dateFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withTime, .withFractionalSeconds]
         return formatter
     }()
+
+    /// Helper to format current time in readable format
+    private static func getCurrentTimeString() -> String {
+        let isoString = dateFormatter.string(from: Date())
+        // Extract time portion from ISO8601 format (e.g., "13:45:30.123" from "2024-01-15T13:45:30.123Z")
+        if let timeRange = isoString.range(of: #"\d{2}:\d{2}:\d{2}\.\d{3}"#, options: .regularExpression) {
+            return String(isoString[timeRange])
+        }
+        return isoString
+    }
 }

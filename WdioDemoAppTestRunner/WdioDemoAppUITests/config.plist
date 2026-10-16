@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>app</key>
+	<dict>
+		<key>bundleId</key>
+		<string>org.wdiodemoapp</string>
+		<key>path</key>
+		<string></string>
+		<key>baseURL</key>
+		<string></string>
+	</dict>
+	<key>device</key>
+	<dict>
+		<key>name</key>
+		<string>iPhone 15</string>
+		<key>platformVersion</key>
+		<string>17.0</string>
+	</dict>
+	<key>wait</key>
+	<dict>
+		<key>implicitTimeout</key>
+		<real>10.0</real>
+		<key>explicitTimeout</key>
+		<real>30.0</real>
+		<key>elementWaitTimeout</key>
+		<real>5.0</real>
+	</dict>
+	<key>reporting</key>
+	<dict>
+		<key>screenshotOnFailure</key>
+		<true/>
+		<key>videoRecording</key>
+		<false/>
+	</dict>
+	<key>testData</key>
+	<dict>
+		<key>path</key>
+		<string>TestData</string>
+	</dict>
+	<key>logging</key>
+	<dict>
+		<key>level</key>
+		<string>info</string>
+		<key>enabled</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

@@ -96,7 +96,7 @@ public class DataDrivenTestRunner {
     /// - Parameters:
     ///   - provider: Data provider
     ///   - testBlock: Test block to execute for each data item
-    public static func run<T>(with provider: any DataProvider<DataType = T>, testBlock: (T, Int) throws -> Void) rethrows {
+    public static func run<P: DataProvider>(with provider: P, testBlock: (P.DataType, Int) throws -> Void) throws {
         do {
             let data = try provider.provideData()
             print("📊 [DataProvider] Running test with \(data.count) data sets")
@@ -117,7 +117,7 @@ public class DataDrivenTestRunner {
     /// - Parameters:
     ///   - fileName: JSON file name
     ///   - testBlock: Test block to execute for each data item
-    public static func runWithJSON<T: Decodable>(fileName: String, testBlock: (T, Int) throws -> Void) rethrows {
+    public static func runWithJSON<T: Decodable>(fileName: String, testBlock: (T, Int) throws -> Void) throws {
         let provider = JSONDataProvider<T>(fileName: fileName)
         try run(with: provider, testBlock: testBlock)
     }
@@ -126,7 +126,7 @@ public class DataDrivenTestRunner {
     /// - Parameters:
     ///   - fileName: CSV file name
     ///   - testBlock: Test block to execute for each row
-    public static func runWithCSV(fileName: String, testBlock: ([String: String], Int) throws -> Void) rethrows {
+    public static func runWithCSV(fileName: String, testBlock: ([String: String], Int) throws -> Void) throws {
         let provider = CSVDataProvider(fileName: fileName)
         try run(with: provider, testBlock: testBlock)
     }

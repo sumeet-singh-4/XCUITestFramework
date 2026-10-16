@@ -75,7 +75,7 @@ public class ScreenshotUtils {
         let fullPath = "\(directory)/\(filename)-\(timestamp()).png"
 
         do {
-            try screenshot.pngRepresentation.write(to: URL(fileURLPath: fullPath))
+            try screenshot.pngRepresentation.write(to: URL(fileURLWithPath: fullPath))
             print("✅ [Screenshot] Saved to: \(fullPath)")
             return fullPath
         } catch {
